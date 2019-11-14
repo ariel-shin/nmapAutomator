@@ -573,22 +573,24 @@ if [[ "$2" =~ ^(SubnetAll)$ ]]; then
 		header $e $2
 
 		quickScan $e
-		# basicScan $e
+		basicScan $e
 
 		cd ..
-		echo "this is my current file"
-		ls
 	done
 	
-	# for e in "${array[@]}"
-	# do
-	# 	UDPScan $e
-	# 	fullScan $e
-	# 	vulnsScan $e
-	# 	recon $e
-	# done
+	for e in "${array[@]}"
+	do
+		cd "$e-scans"
+		
+		UDPScan $e
+		fullScan $e
+		vulnsScan $e
+		recon $e
 
-	# footer
+		cd ..
+	done
+
+	footer
 else
 	echo -e "${RED}"
 	echo -e "${RED}Invalid Type!"
