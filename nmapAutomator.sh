@@ -20,7 +20,7 @@ echo -e "\tFull:	Runs a full range port scan, then runs a thorough scan on new p
 echo -e "\tVulns:	Runs CVE scan and nmap Vulns scan on all found ports (~5-15 minutes)"
 echo -e "\tRecon:	Suggests recon commands, then prompts to automatically run them"
 echo -e "\tAll:	Runs all the scans (~20-30 minutes)"
-echo -e "\tAll:	Runs Quick and Basic scans on all IPs in the subnet then the remaining scans"
+echo -e "\tSubnetAll:	Runs Quick and Basic scans on all IPs in a text file then the remaining scans"
 echo -e ""
 exit 1
 }
@@ -581,7 +581,7 @@ if [[ "$2" =~ ^(SubnetAll)$ ]]; then
 	for e in "${array[@]}"
 	do
 		cd "$e-scans"
-		
+
 		UDPScan $e
 		fullScan $e
 		vulnsScan $e
