@@ -25,6 +25,14 @@ echo -e ""
 exit 1
 }
 
+getArray() {
+    array=() # Create array
+    while IFS= read -r line # Read a line
+    do
+        array+=("$line") # Append line to the array
+    done < "$1"
+}
+
 header(){
 echo -e ""
 
@@ -128,10 +136,8 @@ quickScan(){
 echo -e "${GREEN}---------------------Starting Nmap Quick Scan---------------------"
 echo -e "${NC}"
 
-
-echo nmap/Quick_$1.nmap $1
-# $nmapType -T4 --max-retries 1 --max-scan-delay 20 --defeat-rst-ratelimit --open -oN nmap/Quick_$1.nmap $1
-# assignPorts $1
+$nmapType -T4 --max-retries 1 --max-scan-delay 20 --defeat-rst-ratelimit --open -oN nmap/Quick_$1.nmap $1
+assignPorts $1
 
 echo -e ""
 echo -e ""
@@ -431,26 +437,6 @@ echo -e ""
 echo -e ""
 }
 
-getArray() {
-    array=() # Create array
-    while IFS= read -r line # Read a line
-    do
-        array+=("$line") # Append line to the array
-    done < "$1"
-}
-
-subnetScan(){
-	echo $1
-
-	getArray "$1"
-	for e in "${array[@]}"
-	do
-	    quickScan e
-	    basicScan e
-	done
-
-}
-
 runRecon(){
 echo -e ""
 echo -e ""
@@ -529,12 +515,12 @@ if [[ "$2" =~ ^(Quick|Basic|UDP|Full|Vulns|Recon|All)$ ]]; then
 	fi
 fi
 
-if [[ "$2" =~ ^(Quick|Basic|UDP|Full|Vulns|Recon|All|SubnetAll)$ ]]; then
-	if [[ ! -d $1 ]]; then
-	        mkdir $1
+if [[ "$2" =~ ^(Quick|Basic|UDP|Full|Vulns|Recon|All)$ ]]; then
+	if [[ ! -d $1-scans ]]; then
+	        mkdir $1-scans
 	fi
 
-	cd $1
+	cd $1-scans
 	
 	if [[ ! -d nmap/ ]]; then
 	        mkdir nmap/
@@ -561,10 +547,48 @@ if [[ "$2" =~ ^(Quick|Basic|UDP|Full|Vulns|Recon|All|SubnetAll)$ ]]; then
 			fullScan $1
 			vulnsScan $1
 			recon $1;;
-		SubnetAll)	quickScan $1;;
 	esac
 	
 	footer
+fi 
+
+if [[ "$2" =~ ^(SubnetAll)$ ]]; then
+
+	if [[ ! -d $1-scans ]]; then
+	        mkdir $1-scans
+	fi
+
+	cd $1-scans
+
+	getArray "../$1"
+	for e in "${array[@]}"
+	do 
+		mkdir "$e-scans"
+		cd "$e-scans"
+		if [[ ! -d nmap ]]; then
+	        mkdir nmap/
+		fi
+
+		assignPorts $e
+		header $e $2
+
+		quickScan $e
+		# basicScan $e
+
+		cd ..
+		echo "this is my current file"
+		ls
+	done
+	
+	# for e in "${array[@]}"
+	# do
+	# 	UDPScan $e
+	# 	fullScan $e
+	# 	vulnsScan $e
+	# 	recon $e
+	# done
+
+	# footer
 else
 	echo -e "${RED}"
 	echo -e "${RED}Invalid Type!"
