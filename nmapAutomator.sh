@@ -20,6 +20,7 @@ echo -e "\tFull:	Runs a full range port scan, then runs a thorough scan on new p
 echo -e "\tVulns:	Runs CVE scan and nmap Vulns scan on all found ports (~5-15 minutes)"
 echo -e "\tRecon:	Suggests recon commands, then prompts to automatically run them"
 echo -e "\tAll:	Runs all the scans (~20-30 minutes)"
+echo -e "\tAll:	Runs Quick and Basic scans on all IPs in the subnet then the remaining scans"
 echo -e ""
 exit 1
 }
@@ -127,8 +128,10 @@ quickScan(){
 echo -e "${GREEN}---------------------Starting Nmap Quick Scan---------------------"
 echo -e "${NC}"
 
-$nmapType -T4 --max-retries 1 --max-scan-delay 20 --defeat-rst-ratelimit --open -oN nmap/Quick_$1.nmap $1
-assignPorts $1
+
+echo nmap/Quick_$1.nmap $1
+# $nmapType -T4 --max-retries 1 --max-scan-delay 20 --defeat-rst-ratelimit --open -oN nmap/Quick_$1.nmap $1
+# assignPorts $1
 
 echo -e ""
 echo -e ""
@@ -428,6 +431,26 @@ echo -e ""
 echo -e ""
 }
 
+getArray() {
+    array=() # Create array
+    while IFS= read -r line # Read a line
+    do
+        array+=("$line") # Append line to the array
+    done < "$1"
+}
+
+subnetScan(){
+	echo $1
+
+	getArray "$1"
+	for e in "${array[@]}"
+	do
+	    quickScan e
+	    basicScan e
+	done
+
+}
+
 runRecon(){
 echo -e ""
 echo -e ""
@@ -495,16 +518,18 @@ if (( "$#" != 2 )); then
 	usage
 fi
 
-if [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-	:
-else
-	echo -e "${RED}"
-	echo -e "${RED}Invalid IP!"
-	echo -e "${RED}"
-	usage
+if [[ "$2" =~ ^(Quick|Basic|UDP|Full|Vulns|Recon|All)$ ]]; then
+	if [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+		:
+	else
+		echo -e "${RED}"
+		echo -e "${RED}Invalid IP!"
+		echo -e "${RED}"
+		usage
+	fi
 fi
 
-if [[ "$2" =~ ^(Quick|Basic|UDP|Full|Vulns|Recon|All)$ ]]; then
+if [[ "$2" =~ ^(Quick|Basic|UDP|Full|Vulns|Recon|All|SubnetAll)$ ]]; then
 	if [[ ! -d $1 ]]; then
 	        mkdir $1
 	fi
@@ -536,6 +561,7 @@ if [[ "$2" =~ ^(Quick|Basic|UDP|Full|Vulns|Recon|All)$ ]]; then
 			fullScan $1
 			vulnsScan $1
 			recon $1;;
+		SubnetAll)	quickScan $1;;
 	esac
 	
 	footer
